@@ -1,11 +1,11 @@
-output "name" {
+output "namee" {
   value = azurerm_resource_group.example.name
 }
 
-output "location" {
-  value = azurerm_resource_group.example.location
+output "ids" {
+  value = azurerm_resource_group.example.id
 }
 
-output "id" {
-  value = azurerm_resource_group.example.id
+output "locations" {
+  value = azurerm_resource_group.example.location
 }

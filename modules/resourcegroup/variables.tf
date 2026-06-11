@@ -1,5 +1,6 @@
 variable "name" {
   type        = string
+  default     = "rgfortest2"
   description = "Resource group name"
 }
 

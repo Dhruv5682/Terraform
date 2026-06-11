@@ -24,4 +24,5 @@ module "storageaccount" {
   resource_group_name = module.resourcegroup.name
   location            = var.location
   environment         = var.environment
+
 }

@@ -1,23 +1,30 @@
-variable "environment" {
-  type        = string
-  description = "Environment name"
-  default     = "dev"
-}
-
 variable "location" {
   type        = string
   description = "Azure region"
-  default     = "Central India"
+  default     = "southeastasia"
 }
 
-variable "storageaccountname" {
-  type        = string
-  description = "Storage account name"
-  default     = "salearndev123585"
+variable "environment" {
+  type    = string
+  default = "dev"
 }
 
 variable "rgname" {
-  type        = string
-  description = "Resource group name"
-  default     = "rg-learn-dev-june-default"
+  type    = string
+  default = "rg-webapp-dev"
+}
+
+variable "vnet_name" {
+  type    = string
+  default = "vnet-dev-sea"
+}
+
+variable "db_admin_user" {
+  type    = string
+  default = "mysqladmin"
+}
+
+variable "db_admin_password" {
+  type      = string
+  sensitive = true
 }

@@ -6,4 +6,10 @@ resource "azurerm_resource_group" "example" {
     environment = var.environment
     name        = var.name
   }
+
+  # lifecycle {
+  #   prevent_destroy = var.environment == "prod" || var.environment == "Prod" ? true : false
+  # }
+
+
 }
