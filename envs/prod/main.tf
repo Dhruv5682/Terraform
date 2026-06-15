@@ -11,18 +11,25 @@ provider "azurerm" {
   features {}
 }
 
+locals {
+  common_tags = {
+    environment = var.environment
+    region      = var.location
+  }
+}
+
 module "resourcegroup" {
   source      = "../../modules/resourcegroup"
   name        = var.rgname
   location    = var.location
   environment = var.environment
+  tags        = local.common_tags
 }
 
-module "storageaccount" {
-  source              = "../../modules/storageaccount"
-  name                = var.storageaccountname
-  resource_group_name = module.resourcegroup.name
-  location            = var.location
-  environment         = var.environment
 
+module "policy" {
+  source                   = "../../modules/policy"
+  resource_group_id        = module.resourcegroup.ids
+  location                 = var.location
+  allowed_app_service_skus = ["B1", "B2", "B3"]
 }

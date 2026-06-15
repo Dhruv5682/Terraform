@@ -4,6 +4,7 @@ resource "azurerm_public_ip" "appgw_pip" {
   location            = var.location
   allocation_method   = "Static"
   sku                 = "Standard"
+  tags                = var.tags
 }
 
 locals {
@@ -19,14 +20,55 @@ locals {
   url_path_map_name              = "${var.appgw_name}-url-map"
 }
 
+resource "azurerm_web_application_firewall_policy" "waf" {
+  name                = "${var.appgw_name}-wafpolicy"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  tags                = var.tags
+
+  policy_settings {
+    enabled = true
+    mode    = "Prevention"
+  }
+
+  custom_rules {
+    name      = "RateLimit50"
+    priority  = 1
+    rule_type = "RateLimitRule"
+    action    = "Block"
+
+    rate_limit_duration  = "OneMin"
+    rate_limit_threshold = 50
+    group_rate_limit_by  = "ClientAddr"
+
+    match_conditions {
+      match_variables {
+        variable_name = "RemoteAddr"
+      }
+      operator           = "IPMatch"
+      negation_condition = false
+      match_values       = ["0.0.0.0/0", "::/0"]
+    }
+  }
+
+  managed_rules {
+    managed_rule_set {
+      type    = "OWASP"
+      version = "3.2"
+    }
+  }
+}
+
 resource "azurerm_application_gateway" "network" {
   name                = var.appgw_name
   resource_group_name = var.resource_group_name
   location            = var.location
+  tags                = var.tags
+  firewall_policy_id  = azurerm_web_application_firewall_policy.waf.id
 
   sku {
-    name     = "Standard_v2"
-    tier     = "Standard_v2"
+    name     = "WAF_v2"
+    tier     = "WAF_v2"
     capacity = 1
   }
 
@@ -99,5 +141,86 @@ resource "azurerm_application_gateway" "network" {
       backend_address_pool_name  = local.backend_address_pool_name_api
       backend_http_settings_name = local.http_setting_name_api
     }
+  }
+}
+
+resource "azurerm_monitor_metric_alert" "appgw_5xx_alert" {
+  name                = "appgw-5xx-alert"
+  resource_group_name = var.resource_group_name
+  scopes              = [azurerm_application_gateway.network.id]
+  description         = "Alert when HTTP 5xx errors are greater than 5"
+  severity            = 1
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+  tags                = var.tags
+
+  criteria {
+    metric_namespace = "Microsoft.Network/applicationGateways"
+    metric_name      = "ResponseStatus"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 5
+
+    dimension {
+      name     = "HttpStatusGroup"
+      operator = "Include"
+      values   = ["5xx"]
+    }
+  }
+
+  action {
+    action_group_id = var.action_group_id
+  }
+}
+
+resource "azurerm_monitor_metric_alert" "appgw_4xx_alert" {
+  name                = "appgw-4xx-alert"
+  resource_group_name = var.resource_group_name
+  scopes              = [azurerm_application_gateway.network.id]
+  description         = "Alert when HTTP 4xx errors are greater than 20"
+  severity            = 2
+  frequency           = "PT5M"
+  window_size         = "PT5M"
+  tags                = var.tags
+
+  criteria {
+    metric_namespace = "Microsoft.Network/applicationGateways"
+    metric_name      = "ResponseStatus"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 20
+
+    dimension {
+      name     = "HttpStatusGroup"
+      operator = "Include"
+      values   = ["4xx"]
+    }
+  }
+
+  action {
+    action_group_id = var.action_group_id
+  }
+}
+
+resource "azurerm_monitor_metric_alert" "appgw_latency_alert" {
+  name                = "appgw-latency-alert"
+  resource_group_name = var.resource_group_name
+  scopes              = [azurerm_application_gateway.network.id]
+  description         = "Alert when total response time is greater than 3 seconds"
+  severity            = 2
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+  tags                = var.tags
+
+  criteria {
+    metric_namespace = "Microsoft.Network/applicationGateways"
+    metric_name      = "ApplicationGatewayTotalTime"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 3000  # 3000 ms = 3 seconds
+  }
+
+  action {
+    action_group_id = var.action_group_id
   }
 }

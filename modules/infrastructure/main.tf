@@ -3,6 +3,7 @@ resource "azurerm_virtual_network" "vnet" {
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = var.address_space
+  tags                = var.tags
 }
 
 resource "azurerm_subnet" "appgw" {
@@ -50,6 +51,7 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled    = false
   sku_name                    = "standard"
   rbac_authorization_enabled  = true
+  tags                        = var.tags
 }
 
 resource "azurerm_log_analytics_workspace" "law" {
@@ -58,6 +60,7 @@ resource "azurerm_log_analytics_workspace" "law" {
   resource_group_name = var.resource_group_name
   sku                 = "PerGB2018"
   retention_in_days   = 30
+  tags                = var.tags
 }
 
 resource "azurerm_application_insights" "appinsights" {
@@ -66,4 +69,5 @@ resource "azurerm_application_insights" "appinsights" {
   resource_group_name = var.resource_group_name
   workspace_id        = azurerm_log_analytics_workspace.law.id
   application_type    = "web"
+  tags                = var.tags
 }

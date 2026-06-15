@@ -1,6 +1,7 @@
 resource "azurerm_private_dns_zone" "mysql_dns" {
   name                = "privatelink.mysql.database.azure.com"
   resource_group_name = var.resource_group_name
+  tags                = var.tags
 }
 
 resource "null_resource" "seed_db" {
@@ -29,6 +30,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "mysql_dns_link" {
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.mysql_dns.name
   virtual_network_id    = var.vnet_id
+  tags                  = var.tags
 }
 
 resource "azurerm_mysql_flexible_server" "mysql" {
@@ -40,6 +42,8 @@ resource "azurerm_mysql_flexible_server" "mysql" {
   sku_name               = "B_Standard_B1ms"
   version                = "8.0.21"
   zone                   = "1"
+  tags                   = var.tags
+  # sensitive     = true
 }
 
 resource "azurerm_mysql_flexible_database" "default_db" {
@@ -55,6 +59,7 @@ resource "azurerm_private_endpoint" "mysql_pe" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.pe_subnet_id
+  tags                = var.tags
 
   private_service_connection {
     name                           = "${var.mysql_server_name}-privateserviceconnection"
@@ -69,4 +74,50 @@ resource "azurerm_private_endpoint" "mysql_pe" {
   }
 
   depends_on = [azurerm_private_dns_zone_virtual_network_link.mysql_dns_link]
+}
+
+resource "azurerm_monitor_metric_alert" "mysql_cpu_alert" {
+  name                = "mysql-cpu-alert"
+  resource_group_name = var.resource_group_name
+  scopes              = [azurerm_mysql_flexible_server.mysql.id]
+  description         = "Alert when MySQL CPU usage exceeds 80%"
+  severity            = 2
+  frequency           = "PT5M"
+  window_size         = "PT5M"
+  tags                = var.tags
+
+  criteria {
+    metric_namespace = "Microsoft.DBforMySQL/flexibleServers"
+    metric_name      = "cpu_percent"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
+  }
+
+  action {
+    action_group_id = var.action_group_id
+  }
+}
+
+resource "azurerm_monitor_metric_alert" "mysql_connections_alert" {
+  name                = "mysql-connections-alert"
+  resource_group_name = var.resource_group_name
+  scopes              = [azurerm_mysql_flexible_server.mysql.id]
+  description         = "Alert when MySQL active connections exceed 80"
+  severity            = 2
+  frequency           = "PT5M"
+  window_size         = "PT5M"
+  tags                = var.tags
+
+  criteria {
+    metric_namespace = "Microsoft.DBforMySQL/flexibleServers"
+    metric_name      = "active_connections"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
+  }
+
+  action {
+    action_group_id = var.action_group_id
+  }
 }

@@ -13,3 +13,4 @@ variable "environment" {
   type        = string
   description = "Environment name used for tagging"
 }
+variable "tags" { type = map(string) }

@@ -5,3 +5,5 @@ variable "admin_username" {}
 variable "admin_password" { sensitive = true }
 variable "vnet_id" {}
 variable "pe_subnet_id" {}
+variable "tags" { type = map(string) }
+variable "action_group_id" {}

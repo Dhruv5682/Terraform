@@ -11,3 +11,6 @@ variable "kv_uri" {}
 variable "mysql_fqdn" {}
 variable "db_user" {}
 variable "db_password" { sensitive = true }
+variable "tags" { type = map(string) }
+variable "app_insights_connection_string" {}
+variable "log_workspace_id" {}

@@ -9,3 +9,4 @@ variable "acr_name" {}
 variable "kv_name" {}
 variable "log_workspace_name" {}
 variable "app_insights_name" {}
+variable "tags" { type = map(string) }
