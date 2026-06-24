@@ -43,7 +43,7 @@ module "infrastructure" {
   appgw_subnet_prefix      = "10.1.1.0/24"
   appservice_subnet_prefix = "10.1.2.0/24"
   pe_subnet_prefix         = "10.1.3.0/24"
-  acr_name                 = "${var.acr_name}${random_string.suffix.result}"
+
   kv_name                  = "${var.kv_name}-${random_string.suffix.result}"
   log_workspace_name       = var.log_workspace_name
   app_insights_name        = var.app_insights_name
@@ -70,8 +70,7 @@ module "compute" {
   app_plan_name        = var.app_plan_name
   frontend_app_name    = "${var.frontend_app_name}-${random_string.suffix.result}"
   backend_app_name     = "${var.backend_app_name}-${random_string.suffix.result}"
-  acr_login_server     = module.infrastructure.acr_login_server
-  acr_id               = module.infrastructure.acr_id
+
   appservice_subnet_id = module.infrastructure.appservice_subnet_id
   kv_id                = module.infrastructure.kv_id
   kv_uri               = module.infrastructure.kv_uri

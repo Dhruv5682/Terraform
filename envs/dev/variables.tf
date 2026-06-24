@@ -29,10 +29,7 @@ variable "db_admin_password" {
   sensitive = true
 }
 
-variable "acr_name" {
-  type    = string
-  default = "acrwebappdevsea"
-}
+
 
 variable "kv_name" {
   type    = string

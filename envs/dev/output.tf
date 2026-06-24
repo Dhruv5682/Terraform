@@ -13,7 +13,4 @@ output "mysql_server_fqdn" {
   value       = module.database.mysql_server_fqdn
 }
 
-output "acr_login_server" {
-  description = "The login server for the Azure Container Registry"
-  value       = module.infrastructure.acr_login_server
-}
+

@@ -34,10 +34,7 @@ resource "azurerm_subnet" "pe" {
   address_prefixes     = [var.pe_subnet_prefix]
 }
 
-data "azurerm_container_registry" "acr" {
-  name                = "acrsharedwebapp"
-  resource_group_name = "rg-shared-acr"
-}
+
 
 data "azurerm_client_config" "current" {}
 

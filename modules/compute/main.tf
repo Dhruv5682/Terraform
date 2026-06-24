@@ -14,11 +14,7 @@ resource "azurerm_user_assigned_identity" "mi" {
   tags                = var.tags
 }
 
-resource "azurerm_role_assignment" "acr_pull" {
-  scope                = var.acr_id
-  role_definition_name = "AcrPull"
-  principal_id         = azurerm_user_assigned_identity.mi.principal_id
-}
+
 
 resource "azurerm_role_assignment" "kv_secret_user" {
   scope                = var.kv_id
@@ -66,15 +62,14 @@ resource "azurerm_linux_web_app" "backend" {
 
   site_config {
     application_stack {
-      docker_image_name   = "backend:v1"
-      docker_registry_url = "https://${var.acr_login_server}"
+      docker_image_name   = "dhruvsimform25/backend:latest"
+      docker_registry_url = "https://index.docker.io"
     }
-    container_registry_use_managed_identity       = true
-    container_registry_managed_identity_client_id = azurerm_user_assigned_identity.mi.client_id
     vnet_route_all_enabled                        = true
   }
 
   app_settings = {
+    "DOCKER_ENABLE_CI"                      = "true"
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE"   = "false"
     "DB_CONNECTION_STRING"                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_conn.versionless_id})"
     "DATABASE_URL"                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_url.versionless_id})"
@@ -100,20 +95,19 @@ resource "azurerm_linux_web_app" "frontend" {
   virtual_network_subnet_id = var.appservice_subnet_id
 
   identity {
-    type         = "UserAssigned"
+    type         = "UserAssigned" 
     identity_ids = [azurerm_user_assigned_identity.mi.id] # Using same MI for ACR pull
   }
 
   site_config {
     application_stack {
-      docker_image_name   = "frontend:v1"
-      docker_registry_url = "https://${var.acr_login_server}"
+      docker_image_name   = "dhruvsimform25/frontend:latest"
+      docker_registry_url = "https://index.docker.io"
     }
-    container_registry_use_managed_identity       = true
-    container_registry_managed_identity_client_id = azurerm_user_assigned_identity.mi.client_id
   }
 
   app_settings = {
+    "DOCKER_ENABLE_CI"                      = "true"
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE"   = "false"
     "BACKEND_URL"                           = "https://${azurerm_linux_web_app.backend.default_hostname}"
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = var.app_insights_connection_string

@@ -1,0 +1,154 @@
+# ──────────────────────────────────────────────────────────
+# Pipeline: Infrastructure CI/CD
+# Terraform validate → plan → (manual approval) → apply
+# Target: envs/dev only
+# ──────────────────────────────────────────────────────────
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - 'envs/dev/**'
+      - 'modules/**'
+    exclude:
+      - '*.md'
+      - '.gitignore'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: infra-vars
+  - name: terraformVersion
+    value: '1.9.0'
+  - name: workingDirectory
+    value: 'envs/dev'
+  # Non-sensitive tfvars values (since *.tfvars is gitignored)
+  - name: TF_VAR_rgname
+    value: 'rg-webapp-dev-sea'
+  - name: TF_VAR_vnet_name
+    value: 'vnet-webapp-dev-sea'
+
+stages:
+  # ─── Stage 1: Validate ───
+  - stage: Validate
+    displayName: 'Terraform Validate'
+    jobs:
+      - job: Validate
+        displayName: 'Format Check & Validate'
+        steps:
+          - checkout: self
+
+          - script: |
+              wget -q https://releases.hashicorp.com/terraform/$(terraformVersion)/terraform_$(terraformVersion)_linux_amd64.zip
+              unzip -o terraform_*.zip
+              sudo mv terraform /usr/local/bin/
+              terraform version
+            displayName: 'Install Terraform $(terraformVersion)'
+
+          - script: terraform fmt -check -recursive
+            displayName: 'Check formatting (all files)'
+            workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+          - script: terraform init -backend=false
+            displayName: 'Init (validation only)'
+            workingDirectory: '$(workingDirectory)'
+
+          - script: terraform validate
+            displayName: 'Validate configuration'
+            workingDirectory: '$(workingDirectory)'
+
+  # ─── Stage 2: Plan ───
+  - stage: Plan
+    displayName: 'Terraform Plan'
+    dependsOn: Validate
+    jobs:
+      - job: Plan
+        displayName: 'Generate execution plan'
+        steps:
+          - checkout: self
+
+          - script: |
+              wget -q https://releases.hashicorp.com/terraform/$(terraformVersion)/terraform_$(terraformVersion)_linux_amd64.zip
+              unzip -o terraform_*.zip
+              sudo mv terraform /usr/local/bin/
+            displayName: 'Install Terraform $(terraformVersion)'
+
+          - script: terraform init -input=false
+            displayName: 'Terraform Init'
+            workingDirectory: '$(workingDirectory)'
+            env:
+              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+
+          - script: terraform plan -out=tfplan -input=false
+            displayName: 'Terraform Plan'
+            workingDirectory: '$(workingDirectory)'
+            env:
+              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+              TF_VAR_db_admin_password: $(TF_VAR_db_admin_password)
+
+          - script: terraform show tfplan
+            displayName: 'Show plan output'
+            workingDirectory: '$(workingDirectory)'
+            env:
+              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+
+          - publish: '$(workingDirectory)/tfplan'
+            artifact: terraform-plan
+            displayName: 'Publish plan artifact'
+
+  # ─── Stage 3: Apply (with manual approval via environment) ───
+  - stage: Apply
+    displayName: 'Terraform Apply'
+    dependsOn: Plan
+    jobs:
+      - deployment: Apply
+        displayName: 'Apply infrastructure changes'
+        environment: 'infra-dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - script: |
+                    wget -q https://releases.hashicorp.com/terraform/$(terraformVersion)/terraform_$(terraformVersion)_linux_amd64.zip
+                    unzip -o terraform_*.zip
+                    sudo mv terraform /usr/local/bin/
+                  displayName: 'Install Terraform $(terraformVersion)'
+
+                - script: terraform init -input=false
+                  displayName: 'Terraform Init'
+                  workingDirectory: '$(workingDirectory)'
+                  env:
+                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+                    ARM_TENANT_ID: $(ARM_TENANT_ID)
+
+                - download: current
+                  artifact: terraform-plan
+                  displayName: 'Download plan artifact'
+
+                - script: |
+                    cp $(Pipeline.Workspace)/terraform-plan/tfplan ./tfplan
+                    terraform apply -auto-approve -input=false tfplan
+                  displayName: 'Terraform Apply'
+                  workingDirectory: '$(workingDirectory)'
+                  env:
+                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+                    ARM_TENANT_ID: $(ARM_TENANT_ID)
+                    TF_VAR_db_admin_password: $(TF_VAR_db_admin_password)
