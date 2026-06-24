@@ -71,9 +71,9 @@ module "compute" {
   frontend_app_name   = "${var.frontend_app_name}-${random_string.suffix.result}"
   backend_app_name    = "${var.backend_app_name}-${random_string.suffix.result}"
 
-  appservice_subnet_id           = module.infrastructure.appservice_subnet_id
-  kv_id                          = module.infrastructure.kv_id
-  kv_uri                         = module.infrastructure.kv_uri
+  appservice_subnet_id = module.infrastructure.appservice_subnet_id
+  #   kv_id                          = module.infrastructure.kv_id
+  #   kv_uri                         = module.infrastructure.kv_uri
   mysql_fqdn                     = module.database.mysql_server_fqdn
   db_user                        = var.db_admin_user
   db_password                    = var.db_admin_password

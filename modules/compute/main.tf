@@ -16,38 +16,38 @@ resource "azurerm_user_assigned_identity" "mi" {
 
 
 
-data "azurerm_client_config" "current" {}
-
-resource "azurerm_key_vault_access_policy" "mi_policy" {
-  key_vault_id = var.kv_id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = azurerm_user_assigned_identity.mi.principal_id
-
-  secret_permissions = [
-    "Get", "List"
-  ]
-}
-
-resource "azurerm_key_vault_secret" "db_conn" {
-  name         = "db-connection-string"
-  value        = "Server=${var.mysql_fqdn};Database=mydb;Uid=${var.db_user};Pwd=${var.db_password};"
-  key_vault_id = var.kv_id
-  tags         = var.tags
-}
-
-resource "azurerm_key_vault_secret" "db_pass" {
-  name         = "db-password"
-  value        = var.db_password
-  key_vault_id = var.kv_id
-  tags         = var.tags
-}
-
-resource "azurerm_key_vault_secret" "db_url" {
-  name         = "db-url"
-  value        = "mysql://${var.db_user}:${var.db_password}@${var.mysql_fqdn}:3306/mydb"
-  key_vault_id = var.kv_id
-  tags         = var.tags
-}
+# data "azurerm_client_config" "current" {}
+# 
+# resource "azurerm_key_vault_access_policy" "mi_policy" {
+#   key_vault_id = var.kv_id
+#   tenant_id    = data.azurerm_client_config.current.tenant_id
+#   object_id    = azurerm_user_assigned_identity.mi.principal_id
+# 
+#   secret_permissions = [
+#     "Get", "List"
+#   ]
+# }
+# 
+# resource "azurerm_key_vault_secret" "db_conn" {
+#   name         = "db-connection-string"
+#   value        = "Server=${var.mysql_fqdn};Database=mydb;Uid=${var.db_user};Pwd=${var.db_password};"
+#   key_vault_id = var.kv_id
+#   tags         = var.tags
+# }
+# 
+# resource "azurerm_key_vault_secret" "db_pass" {
+#   name         = "db-password"
+#   value        = var.db_password
+#   key_vault_id = var.kv_id
+#   tags         = var.tags
+# }
+# 
+# resource "azurerm_key_vault_secret" "db_url" {
+#   name         = "db-url"
+#   value        = "mysql://${var.db_user}:${var.db_password}@${var.mysql_fqdn}:3306/mydb"
+#   key_vault_id = var.kv_id
+#   tags         = var.tags
+# }
 
 resource "azurerm_linux_web_app" "backend" {
   name                = var.backend_app_name
@@ -74,18 +74,16 @@ resource "azurerm_linux_web_app" "backend" {
   app_settings = {
     "DOCKER_ENABLE_CI"                      = "true"
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE"   = "false"
-    "DB_CONNECTION_STRING"                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_conn.versionless_id})"
-    "DATABASE_URL"                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_url.versionless_id})"
+    "DB_CONNECTION_STRING"                  = "Server=${var.mysql_fqdn};Database=mydb;Uid=${var.db_user};Pwd=${var.db_password};"
+    "DATABASE_URL"                          = "mysql://${var.db_user}:${var.db_password}@${var.mysql_fqdn}:3306/mydb"
     "DB_HOST"                               = var.mysql_fqdn
     "DB_USER"                               = var.db_user
-    "DB_PASSWORD"                           = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_pass.versionless_id})"
+    "DB_PASSWORD"                           = var.db_password
     "DB_DATABASE"                           = "mydb"
     "DB_NAME"                               = "mydb"
     "DB_SSL"                                = "true"
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = var.app_insights_connection_string
   }
-
-  key_vault_reference_identity_id = azurerm_user_assigned_identity.mi.id
 }
 
 resource "azurerm_linux_web_app" "frontend" {
