@@ -29,7 +29,7 @@ POLICY_RULE
 resource "azurerm_resource_group_policy_assignment" "require_tags_assign" {
   name                 = "req-tags-assign"
   policy_definition_id = azurerm_policy_definition.require_tags.id
-  resource_group_id  = var.resource_group_id
+  resource_group_id    = var.resource_group_id
 }
 
 resource "azurerm_policy_definition" "allowed_locations" {
@@ -70,7 +70,7 @@ PARAMETERS
 resource "azurerm_resource_group_policy_assignment" "allowed_locations_assign" {
   name                 = "allowed-loc-assign"
   policy_definition_id = azurerm_policy_definition.allowed_locations.id
-  resource_group_id  = var.resource_group_id
+  resource_group_id    = var.resource_group_id
   parameters           = <<PARAMETERS
 {
   "allowedLocations": {
@@ -125,7 +125,7 @@ PARAMETERS
 resource "azurerm_resource_group_policy_assignment" "app_service_sku_assign" {
   name                 = "app-svc-sku-assign"
   policy_definition_id = azurerm_policy_definition.app_service_sku.id
-  resource_group_id  = var.resource_group_id
+  resource_group_id    = var.resource_group_id
   parameters           = <<PARAMETERS
 {
   "allowedSkus": {

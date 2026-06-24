@@ -123,11 +123,11 @@ resource "azurerm_application_gateway" "network" {
   }
 
   request_routing_rule {
-    name                       = local.request_routing_rule_name
-    rule_type                  = "PathBasedRouting"
-    http_listener_name         = local.listener_name
-    url_path_map_name          = local.url_path_map_name
-    priority                   = 100
+    name               = local.request_routing_rule_name
+    rule_type          = "PathBasedRouting"
+    http_listener_name = local.listener_name
+    url_path_map_name  = local.url_path_map_name
+    priority           = 100
   }
 
   url_path_map {
@@ -217,7 +217,7 @@ resource "azurerm_monitor_metric_alert" "appgw_latency_alert" {
     metric_name      = "ApplicationGatewayTotalTime"
     aggregation      = "Average"
     operator         = "GreaterThan"
-    threshold        = 3000  # 3000 ms = 3 seconds
+    threshold        = 3000 # 3000 ms = 3 seconds
   }
 
   action {

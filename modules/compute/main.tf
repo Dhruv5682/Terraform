@@ -65,7 +65,7 @@ resource "azurerm_linux_web_app" "backend" {
       docker_image_name   = "dhruvsimform25/backend:latest"
       docker_registry_url = "https://index.docker.io"
     }
-    vnet_route_all_enabled                        = true
+    vnet_route_all_enabled = true
   }
 
   app_settings = {
@@ -95,7 +95,7 @@ resource "azurerm_linux_web_app" "frontend" {
   virtual_network_subnet_id = var.appservice_subnet_id
 
   identity {
-    type         = "UserAssigned" 
+    type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.mi.id] # Using same MI for ACR pull
   }
 

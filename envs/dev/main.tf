@@ -44,10 +44,10 @@ module "infrastructure" {
   appservice_subnet_prefix = "10.1.2.0/24"
   pe_subnet_prefix         = "10.1.3.0/24"
 
-  kv_name                  = "${var.kv_name}-${random_string.suffix.result}"
-  log_workspace_name       = var.log_workspace_name
-  app_insights_name        = var.app_insights_name
-  tags                     = local.common_tags
+  kv_name            = "${var.kv_name}-${random_string.suffix.result}"
+  log_workspace_name = var.log_workspace_name
+  app_insights_name  = var.app_insights_name
+  tags               = local.common_tags
 }
 
 module "database" {
@@ -64,17 +64,17 @@ module "database" {
 }
 
 module "compute" {
-  source               = "../../modules/compute"
-  location             = var.location
-  resource_group_name  = module.resourcegroup.namee
-  app_plan_name        = var.app_plan_name
-  frontend_app_name    = "${var.frontend_app_name}-${random_string.suffix.result}"
-  backend_app_name     = "${var.backend_app_name}-${random_string.suffix.result}"
+  source              = "../../modules/compute"
+  location            = var.location
+  resource_group_name = module.resourcegroup.namee
+  app_plan_name       = var.app_plan_name
+  frontend_app_name   = "${var.frontend_app_name}-${random_string.suffix.result}"
+  backend_app_name    = "${var.backend_app_name}-${random_string.suffix.result}"
 
-  appservice_subnet_id = module.infrastructure.appservice_subnet_id
-  kv_id                = module.infrastructure.kv_id
-  kv_uri               = module.infrastructure.kv_uri
-  mysql_fqdn           = module.database.mysql_server_fqdn
+  appservice_subnet_id           = module.infrastructure.appservice_subnet_id
+  kv_id                          = module.infrastructure.kv_id
+  kv_uri                         = module.infrastructure.kv_uri
+  mysql_fqdn                     = module.database.mysql_server_fqdn
   db_user                        = var.db_admin_user
   db_password                    = var.db_admin_password
   app_insights_connection_string = module.infrastructure.app_insights_connection_string
@@ -140,245 +140,245 @@ resource "azurerm_portal_dashboard" "dev_dashboard" {
   tags                = local.common_tags
 
   dashboard_properties = jsonencode({
-    "lenses": {
-      "0": {
-        "order": 1,
-        "parts": {
-          "0": {
-            "position": { "x": 0, "y": 0, "rowSpan": 2, "colSpan": 12 },
-            "metadata": {
-              "type": "Extension/HubsExtension/PartType/MarkdownPart",
-              "inputs": [],
-              "settings": {
-                "content": {
-                  "settings": {
-                    "content": "This dashboard tracks the core metrics mapped to your active alerts. It monitors performance across Application Gateway, App Services, and MySQL Database in the **${var.environment}** environment.",
-                    "title": "📊 Webapp Infrastructure Monitoring",
-                    "subtitle": "Metrics"
+    "lenses" : {
+      "0" : {
+        "order" : 1,
+        "parts" : {
+          "0" : {
+            "position" : { "x" : 0, "y" : 0, "rowSpan" : 2, "colSpan" : 12 },
+            "metadata" : {
+              "type" : "Extension/HubsExtension/PartType/MarkdownPart",
+              "inputs" : [],
+              "settings" : {
+                "content" : {
+                  "settings" : {
+                    "content" : "This dashboard tracks the core metrics mapped to your active alerts. It monitors performance across Application Gateway, App Services, and MySQL Database in the **${var.environment}** environment.",
+                    "title" : "📊 Webapp Infrastructure Monitoring",
+                    "subtitle" : "Metrics"
                   }
                 }
               }
             }
           },
-          "1": {
-            "position": { "x": 0, "y": 2, "rowSpan": 4, "colSpan": 4 },
-            "metadata": {
-              "type": "Extension/HubsExtension/PartType/MonitorChartPart",
-              "inputs": [
+          "1" : {
+            "position" : { "x" : 0, "y" : 2, "rowSpan" : 4, "colSpan" : 4 },
+            "metadata" : {
+              "type" : "Extension/HubsExtension/PartType/MonitorChartPart",
+              "inputs" : [
                 {
-                  "name": "options",
-                  "isOptional": true,
-                  "value": {
-                    "chart": {
-                      "metrics": [
+                  "name" : "options",
+                  "isOptional" : true,
+                  "value" : {
+                    "chart" : {
+                      "metrics" : [
                         {
-                          "resourceMetadata": { "id": module.compute.app_plan_id },
-                          "name": "CpuPercentage",
-                          "aggregationType": 4,
-                          "namespace": "microsoft.web/serverfarms",
-                          "metricVisualization": { "displayName": "CPU Percentage" }
+                          "resourceMetadata" : { "id" : module.compute.app_plan_id },
+                          "name" : "CpuPercentage",
+                          "aggregationType" : 4,
+                          "namespace" : "microsoft.web/serverfarms",
+                          "metricVisualization" : { "displayName" : "CPU Percentage" }
                         },
                         {
-                          "resourceMetadata": { "id": module.compute.app_plan_id },
-                          "name": "MemoryPercentage",
-                          "aggregationType": 4,
-                          "namespace": "microsoft.web/serverfarms",
-                          "metricVisualization": { "displayName": "Memory Percentage" }
+                          "resourceMetadata" : { "id" : module.compute.app_plan_id },
+                          "name" : "MemoryPercentage",
+                          "aggregationType" : 4,
+                          "namespace" : "microsoft.web/serverfarms",
+                          "metricVisualization" : { "displayName" : "Memory Percentage" }
                         }
                       ],
-                      "title": "App Service Plan Metrics",
-                      "titleKind": 1,
-                      "visualization": { "chartType": 2 }
+                      "title" : "App Service Plan Metrics",
+                      "titleKind" : 1,
+                      "visualization" : { "chartType" : 2 }
                     }
                   }
                 },
                 {
-                  "name": "sharedTimeRange",
-                  "isOptional": true
+                  "name" : "sharedTimeRange",
+                  "isOptional" : true
                 }
               ]
             }
           },
-          "2": {
-            "position": { "x": 4, "y": 2, "rowSpan": 4, "colSpan": 4 },
-            "metadata": {
-              "type": "Extension/HubsExtension/PartType/MonitorChartPart",
-              "inputs": [
+          "2" : {
+            "position" : { "x" : 4, "y" : 2, "rowSpan" : 4, "colSpan" : 4 },
+            "metadata" : {
+              "type" : "Extension/HubsExtension/PartType/MonitorChartPart",
+              "inputs" : [
                 {
-                  "name": "options",
-                  "isOptional": true,
-                  "value": {
-                    "chart": {
-                      "metrics": [
+                  "name" : "options",
+                  "isOptional" : true,
+                  "value" : {
+                    "chart" : {
+                      "metrics" : [
                         {
-                          "resourceMetadata": { "id": module.database.mysql_server_id },
-                          "name": "cpu_percent",
-                          "aggregationType": 4,
-                          "namespace": "microsoft.dbformysql/flexibleservers",
-                          "metricVisualization": { "displayName": "CPU Percent" }
+                          "resourceMetadata" : { "id" : module.database.mysql_server_id },
+                          "name" : "cpu_percent",
+                          "aggregationType" : 4,
+                          "namespace" : "microsoft.dbformysql/flexibleservers",
+                          "metricVisualization" : { "displayName" : "CPU Percent" }
                         },
                         {
-                          "resourceMetadata": { "id": module.database.mysql_server_id },
-                          "name": "active_connections",
-                          "aggregationType": 4,
-                          "namespace": "microsoft.dbformysql/flexibleservers",
-                          "metricVisualization": { "displayName": "Active Connections" }
+                          "resourceMetadata" : { "id" : module.database.mysql_server_id },
+                          "name" : "active_connections",
+                          "aggregationType" : 4,
+                          "namespace" : "microsoft.dbformysql/flexibleservers",
+                          "metricVisualization" : { "displayName" : "Active Connections" }
                         }
                       ],
-                      "title": "MySQL Database Metrics",
-                      "titleKind": 1,
-                      "visualization": { "chartType": 2 }
+                      "title" : "MySQL Database Metrics",
+                      "titleKind" : 1,
+                      "visualization" : { "chartType" : 2 }
                     }
                   }
                 },
                 {
-                  "name": "sharedTimeRange",
-                  "isOptional": true
+                  "name" : "sharedTimeRange",
+                  "isOptional" : true
                 }
               ]
             }
           },
-          "3": {
-            "position": { "x": 8, "y": 2, "rowSpan": 4, "colSpan": 4 },
-            "metadata": {
-              "type": "Extension/HubsExtension/PartType/MonitorChartPart",
-              "inputs": [
+          "3" : {
+            "position" : { "x" : 8, "y" : 2, "rowSpan" : 4, "colSpan" : 4 },
+            "metadata" : {
+              "type" : "Extension/HubsExtension/PartType/MonitorChartPart",
+              "inputs" : [
                 {
-                  "name": "options",
-                  "isOptional": true,
-                  "value": {
-                    "chart": {
-                      "metrics": [
+                  "name" : "options",
+                  "isOptional" : true,
+                  "value" : {
+                    "chart" : {
+                      "metrics" : [
                         {
-                          "resourceMetadata": { "id": module.gateway.appgw_id },
-                          "name": "ResponseStatus",
-                          "aggregationType": 1,
-                          "namespace": "microsoft.network/applicationgateways",
-                          "metricVisualization": { "displayName": "Response Status" }
+                          "resourceMetadata" : { "id" : module.gateway.appgw_id },
+                          "name" : "ResponseStatus",
+                          "aggregationType" : 1,
+                          "namespace" : "microsoft.network/applicationgateways",
+                          "metricVisualization" : { "displayName" : "Response Status" }
                         },
                         {
-                          "resourceMetadata": { "id": module.gateway.appgw_id },
-                          "name": "ApplicationGatewayTotalTime",
-                          "aggregationType": 4,
-                          "namespace": "microsoft.network/applicationgateways",
-                          "metricVisualization": { "displayName": "Total Time" }
+                          "resourceMetadata" : { "id" : module.gateway.appgw_id },
+                          "name" : "ApplicationGatewayTotalTime",
+                          "aggregationType" : 4,
+                          "namespace" : "microsoft.network/applicationgateways",
+                          "metricVisualization" : { "displayName" : "Total Time" }
                         }
                       ],
-                      "title": "Application Gateway Metrics",
-                      "titleKind": 1,
-                      "visualization": { "chartType": 2 }
+                      "title" : "Application Gateway Metrics",
+                      "titleKind" : 1,
+                      "visualization" : { "chartType" : 2 }
                     }
                   }
                 },
                 {
-                  "name": "sharedTimeRange",
-                  "isOptional": true
+                  "name" : "sharedTimeRange",
+                  "isOptional" : true
                 }
               ]
             }
           },
-          "4": {
-            "position": { "x": 0, "y": 6, "rowSpan": 4, "colSpan": 6 },
-            "metadata": {
-              "type": "Extension/HubsExtension/PartType/MonitorChartPart",
-              "inputs": [
+          "4" : {
+            "position" : { "x" : 0, "y" : 6, "rowSpan" : 4, "colSpan" : 6 },
+            "metadata" : {
+              "type" : "Extension/HubsExtension/PartType/MonitorChartPart",
+              "inputs" : [
                 {
-                  "name": "options",
-                  "isOptional": true,
-                  "value": {
-                    "chart": {
-                      "metrics": [
+                  "name" : "options",
+                  "isOptional" : true,
+                  "value" : {
+                    "chart" : {
+                      "metrics" : [
                         {
-                          "resourceMetadata": { "id": module.compute.frontend_app_id },
-                          "name": "Http5xx",
-                          "aggregationType": 1,
-                          "namespace": "microsoft.web/sites",
-                          "metricVisualization": { "displayName": "HTTP 5xx" }
+                          "resourceMetadata" : { "id" : module.compute.frontend_app_id },
+                          "name" : "Http5xx",
+                          "aggregationType" : 1,
+                          "namespace" : "microsoft.web/sites",
+                          "metricVisualization" : { "displayName" : "HTTP 5xx" }
                         },
                         {
-                          "resourceMetadata": { "id": module.compute.frontend_app_id },
-                          "name": "Http4xx",
-                          "aggregationType": 1,
-                          "namespace": "microsoft.web/sites",
-                          "metricVisualization": { "displayName": "HTTP 4xx" }
+                          "resourceMetadata" : { "id" : module.compute.frontend_app_id },
+                          "name" : "Http4xx",
+                          "aggregationType" : 1,
+                          "namespace" : "microsoft.web/sites",
+                          "metricVisualization" : { "displayName" : "HTTP 4xx" }
                         },
                         {
-                          "resourceMetadata": { "id": module.compute.frontend_app_id },
-                          "name": "AverageResponseTime",
-                          "aggregationType": 4,
-                          "namespace": "microsoft.web/sites",
-                          "metricVisualization": { "displayName": "Avg Response Time" }
+                          "resourceMetadata" : { "id" : module.compute.frontend_app_id },
+                          "name" : "AverageResponseTime",
+                          "aggregationType" : 4,
+                          "namespace" : "microsoft.web/sites",
+                          "metricVisualization" : { "displayName" : "Avg Response Time" }
                         },
                         {
-                          "resourceMetadata": { "id": module.compute.frontend_app_id },
-                          "name": "Requests",
-                          "aggregationType": 1,
-                          "namespace": "microsoft.web/sites",
-                          "metricVisualization": { "displayName": "Requests" }
+                          "resourceMetadata" : { "id" : module.compute.frontend_app_id },
+                          "name" : "Requests",
+                          "aggregationType" : 1,
+                          "namespace" : "microsoft.web/sites",
+                          "metricVisualization" : { "displayName" : "Requests" }
                         }
                       ],
-                      "title": "Frontend App Metrics",
-                      "titleKind": 1,
-                      "visualization": { "chartType": 2 }
+                      "title" : "Frontend App Metrics",
+                      "titleKind" : 1,
+                      "visualization" : { "chartType" : 2 }
                     }
                   }
                 },
                 {
-                  "name": "sharedTimeRange",
-                  "isOptional": true
+                  "name" : "sharedTimeRange",
+                  "isOptional" : true
                 }
               ]
             }
           },
-          "5": {
-            "position": { "x": 6, "y": 6, "rowSpan": 4, "colSpan": 6 },
-            "metadata": {
-              "type": "Extension/HubsExtension/PartType/MonitorChartPart",
-              "inputs": [
+          "5" : {
+            "position" : { "x" : 6, "y" : 6, "rowSpan" : 4, "colSpan" : 6 },
+            "metadata" : {
+              "type" : "Extension/HubsExtension/PartType/MonitorChartPart",
+              "inputs" : [
                 {
-                  "name": "options",
-                  "isOptional": true,
-                  "value": {
-                    "chart": {
-                      "metrics": [
+                  "name" : "options",
+                  "isOptional" : true,
+                  "value" : {
+                    "chart" : {
+                      "metrics" : [
                         {
-                          "resourceMetadata": { "id": module.compute.backend_app_id },
-                          "name": "Http5xx",
-                          "aggregationType": 1,
-                          "namespace": "microsoft.web/sites",
-                          "metricVisualization": { "displayName": "HTTP 5xx" }
+                          "resourceMetadata" : { "id" : module.compute.backend_app_id },
+                          "name" : "Http5xx",
+                          "aggregationType" : 1,
+                          "namespace" : "microsoft.web/sites",
+                          "metricVisualization" : { "displayName" : "HTTP 5xx" }
                         },
                         {
-                          "resourceMetadata": { "id": module.compute.backend_app_id },
-                          "name": "Http4xx",
-                          "aggregationType": 1,
-                          "namespace": "microsoft.web/sites",
-                          "metricVisualization": { "displayName": "HTTP 4xx" }
+                          "resourceMetadata" : { "id" : module.compute.backend_app_id },
+                          "name" : "Http4xx",
+                          "aggregationType" : 1,
+                          "namespace" : "microsoft.web/sites",
+                          "metricVisualization" : { "displayName" : "HTTP 4xx" }
                         },
                         {
-                          "resourceMetadata": { "id": module.compute.backend_app_id },
-                          "name": "AverageResponseTime",
-                          "aggregationType": 4,
-                          "namespace": "microsoft.web/sites",
-                          "metricVisualization": { "displayName": "Avg Response Time" }
+                          "resourceMetadata" : { "id" : module.compute.backend_app_id },
+                          "name" : "AverageResponseTime",
+                          "aggregationType" : 4,
+                          "namespace" : "microsoft.web/sites",
+                          "metricVisualization" : { "displayName" : "Avg Response Time" }
                         },
                         {
-                          "resourceMetadata": { "id": module.compute.backend_app_id },
-                          "name": "Requests",
-                          "aggregationType": 1,
-                          "namespace": "microsoft.web/sites",
-                          "metricVisualization": { "displayName": "Requests" }
+                          "resourceMetadata" : { "id" : module.compute.backend_app_id },
+                          "name" : "Requests",
+                          "aggregationType" : 1,
+                          "namespace" : "microsoft.web/sites",
+                          "metricVisualization" : { "displayName" : "Requests" }
                         }
                       ],
-                      "title": "Backend App Metrics",
-                      "titleKind": 1,
-                      "visualization": { "chartType": 2 }
+                      "title" : "Backend App Metrics",
+                      "titleKind" : 1,
+                      "visualization" : { "chartType" : 2 }
                     }
                   }
                 },
                 {
-                  "name": "sharedTimeRange",
-                  "isOptional": true
+                  "name" : "sharedTimeRange",
+                  "isOptional" : true
                 }
               ]
             }
@@ -386,16 +386,16 @@ resource "azurerm_portal_dashboard" "dev_dashboard" {
         }
       }
     },
-    "metadata": {
-      "model": {
-        "timeRange": {
-          "value": {
-            "relative": {
-              "duration": 24,
-              "timeUnit": 1
+    "metadata" : {
+      "model" : {
+        "timeRange" : {
+          "value" : {
+            "relative" : {
+              "duration" : 24,
+              "timeUnit" : 1
             }
           },
-          "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+          "type" : "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
         }
       }
     }

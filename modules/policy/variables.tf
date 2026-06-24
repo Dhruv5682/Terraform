@@ -9,6 +9,6 @@ variable "location" {
 }
 
 variable "allowed_app_service_skus" {
-  type        = list(string)
-  default     = ["B1", "B2", "B3"]
+  type    = list(string)
+  default = ["B1", "B2", "B3"]
 }
