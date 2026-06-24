@@ -16,17 +16,22 @@ resource "azurerm_user_assigned_identity" "mi" {
 
 
 
-resource "azurerm_role_assignment" "kv_secret_user" {
-  scope                = var.kv_id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.mi.principal_id
+data "azurerm_client_config" "current" {}
+
+resource "azurerm_key_vault_access_policy" "mi_policy" {
+  key_vault_id = var.kv_id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_user_assigned_identity.mi.principal_id
+
+  secret_permissions = [
+    "Get", "List"
+  ]
 }
 
 resource "azurerm_key_vault_secret" "db_conn" {
   name         = "db-connection-string"
   value        = "Server=${var.mysql_fqdn};Database=mydb;Uid=${var.db_user};Pwd=${var.db_password};"
   key_vault_id = var.kv_id
-  depends_on   = [azurerm_role_assignment.kv_secret_user]
   tags         = var.tags
 }
 
@@ -34,7 +39,6 @@ resource "azurerm_key_vault_secret" "db_pass" {
   name         = "db-password"
   value        = var.db_password
   key_vault_id = var.kv_id
-  depends_on   = [azurerm_role_assignment.kv_secret_user]
   tags         = var.tags
 }
 
@@ -42,7 +46,6 @@ resource "azurerm_key_vault_secret" "db_url" {
   name         = "db-url"
   value        = "mysql://${var.db_user}:${var.db_password}@${var.mysql_fqdn}:3306/mydb"
   key_vault_id = var.kv_id
-  depends_on   = [azurerm_role_assignment.kv_secret_user]
   tags         = var.tags
 }
 
