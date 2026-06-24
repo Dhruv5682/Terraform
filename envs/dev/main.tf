@@ -100,12 +100,12 @@ resource "random_string" "suffix" {
   upper   = false
 }
 
-module "policy" {
-  source                   = "../../modules/policy"
-  resource_group_id        = module.resourcegroup.ids
-  location                 = var.location
-  allowed_app_service_skus = ["B1", "B2", "B3"]
-}
+# module "policy" {
+#   source                   = "../../modules/policy"
+#   resource_group_id        = module.resourcegroup.ids
+#   location                 = var.location
+#   allowed_app_service_skus = ["B1", "B2", "B3"]
+# }
 
 resource "azurerm_consumption_budget_resource_group" "budget" {
   name              = "budget-${var.environment}-${local.common_tags.region}"

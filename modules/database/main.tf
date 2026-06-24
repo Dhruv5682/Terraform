@@ -4,26 +4,26 @@ resource "azurerm_private_dns_zone" "mysql_dns" {
   tags                = var.tags
 }
 
-resource "null_resource" "seed_db" {
-  depends_on = [azurerm_mysql_flexible_database.default_db]
-
-  triggers = {
-    db_id = azurerm_mysql_flexible_database.default_db.id
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-      MY_IP=$(curl -s ifconfig.me)
-      az mysql flexible-server firewall-rule create -g ${var.resource_group_name} -n ${azurerm_mysql_flexible_server.mysql.name} --rule-name temp-seed-rule --start-ip-address $MY_IP --end-ip-address $MY_IP
-      
-      sleep 15
-      
-      docker run --rm mysql:8.0 mysql -h ${azurerm_mysql_flexible_server.mysql.fqdn} -u ${var.admin_username} -p'${var.admin_password}' -e "USE mydb; DROP TABLE IF EXISTS items; CREATE TABLE items (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), description TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); INSERT INTO items (name, description) VALUES ('Item 1', 'Description for Item 1'), ('Item 2', 'Description for Item 2');"
-      
-      az mysql flexible-server firewall-rule delete -g ${var.resource_group_name} -n ${azurerm_mysql_flexible_server.mysql.name} --rule-name temp-seed-rule --yes
-    EOT
-  }
-}
+# resource "null_resource" "seed_db" {
+#   depends_on = [azurerm_mysql_flexible_database.default_db]
+# 
+#   triggers = {
+#     db_id = azurerm_mysql_flexible_database.default_db.id
+#   }
+# 
+#   provisioner "local-exec" {
+#     command = <<EOT
+#       MY_IP=$(curl -s ifconfig.me)
+#       az mysql flexible-server firewall-rule create -g ${var.resource_group_name} -n ${azurerm_mysql_flexible_server.mysql.name} --rule-name temp-seed-rule --start-ip-address $MY_IP --end-ip-address $MY_IP
+#       
+#       sleep 15
+#       
+#       docker run --rm mysql:8.0 mysql -h ${azurerm_mysql_flexible_server.mysql.fqdn} -u ${var.admin_username} -p'${var.admin_password}' -e "USE mydb; DROP TABLE IF EXISTS items; CREATE TABLE items (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), description TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); INSERT INTO items (name, description) VALUES ('Item 1', 'Description for Item 1'), ('Item 2', 'Description for Item 2');"
+#       
+#       az mysql flexible-server firewall-rule delete -g ${var.resource_group_name} -n ${azurerm_mysql_flexible_server.mysql.name} --rule-name temp-seed-rule --yes
+#     EOT
+#   }
+# }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "mysql_dns_link" {
   name                  = "mysql-dns-link"
