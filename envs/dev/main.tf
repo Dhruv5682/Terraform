@@ -6,7 +6,7 @@ terraform {
     }
   }
 }
-
+#adding for Trigger
 provider "azurerm" {
   features {
     key_vault {

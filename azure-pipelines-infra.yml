@@ -146,7 +146,7 @@ stages:
   - stage: Destroy
     displayName: 'Terraform Destroy'
     dependsOn: Apply
-    condition: eq(variables['Build.Reason'], 'Manual') # Only runs when you click 'Run pipeline' manually
+    condition: eq(variables['Build.Reason'], 'Manual')
     jobs:
       - deployment: Destroy
         displayName: 'Destroy infrastructure'
