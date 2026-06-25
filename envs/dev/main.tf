@@ -400,4 +400,4 @@ resource "azurerm_portal_dashboard" "dev_dashboard" {
       }
     }
   })
-}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+}
