@@ -1,0 +1,27 @@
+parameters:
+  - name: terraformVersion
+    type: string
+  - name: workingDirectory
+    type: string
+    default: ''
+  - name: runInit
+    type: boolean
+    default: true
+
+steps:
+  - script: |
+      wget -q https://releases.hashicorp.com/terraform/${{ parameters.terraformVersion }}/terraform_${{ parameters.terraformVersion }}_linux_amd64.zip
+      unzip -o terraform_*.zip
+      sudo mv terraform /usr/local/bin/
+      terraform version
+    displayName: 'Install Terraform ${{ parameters.terraformVersion }}'
+
+  - ${{ if eq(parameters.runInit, true) }}:
+    - script: terraform init -input=false
+      displayName: 'Terraform Init'
+      workingDirectory: '${{ parameters.workingDirectory }}'
+      env:
+        ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+        ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+        ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+        ARM_TENANT_ID: $(ARM_TENANT_ID)

@@ -33,12 +33,10 @@ stages:
         steps:
           - checkout: self
 
-          - script: |
-              wget -q https://releases.hashicorp.com/terraform/$(terraformVersion)/terraform_$(terraformVersion)_linux_amd64.zip
-              unzip -o terraform_*.zip
-              sudo mv terraform /usr/local/bin/
-              terraform version
-            displayName: 'Install Terraform $(terraformVersion)'
+          - template: templates/terraform-setup.yml
+            parameters:
+              terraformVersion: $(terraformVersion)
+              runInit: false
 
           - script: terraform fmt -check -recursive
             displayName: 'Check formatting (all files)'
@@ -61,39 +59,19 @@ stages:
         steps:
           - checkout: self
 
-          - script: |
-              wget -q https://releases.hashicorp.com/terraform/$(terraformVersion)/terraform_$(terraformVersion)_linux_amd64.zip
-              unzip -o terraform_*.zip
-              sudo mv terraform /usr/local/bin/
-            displayName: 'Install Terraform $(terraformVersion)'
+          - template: templates/terraform-setup.yml
+            parameters:
+              terraformVersion: $(terraformVersion)
+              workingDirectory: $(workingDirectory)
 
-          - script: terraform init -input=false
-            displayName: 'Terraform Init'
-            workingDirectory: '$(workingDirectory)'
-            env:
-              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-              ARM_TENANT_ID: $(ARM_TENANT_ID)
-
-          - script: terraform plan -out=tfplan -input=false
-            displayName: 'Terraform Plan'
-            workingDirectory: '$(workingDirectory)'
-            env:
-              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-              ARM_TENANT_ID: $(ARM_TENANT_ID)
-              TF_VAR_db_admin_password: $(TF_VAR_db_admin_password)
-
-          - script: terraform show tfplan
-            displayName: 'Show plan output'
-            workingDirectory: '$(workingDirectory)'
-            env:
-              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-              ARM_TENANT_ID: $(ARM_TENANT_ID)
+          - template: templates/terraform-run.yml
+            parameters:
+              command: |
+                terraform plan -out=tfplan -input=false
+                terraform show tfplan
+              displayName: 'Terraform Plan & Show'
+              workingDirectory: $(workingDirectory)
+              includeDbPassword: true
 
           - publish: '$(workingDirectory)/tfplan'
             artifact: terraform-plan
@@ -112,36 +90,23 @@ stages:
               steps:
                 - checkout: self
 
-                - script: |
-                    wget -q https://releases.hashicorp.com/terraform/$(terraformVersion)/terraform_$(terraformVersion)_linux_amd64.zip
-                    unzip -o terraform_*.zip
-                    sudo mv terraform /usr/local/bin/
-                  displayName: 'Install Terraform $(terraformVersion)'
-
-                - script: terraform init -input=false
-                  displayName: 'Terraform Init'
-                  workingDirectory: '$(workingDirectory)'
-                  env:
-                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-                    ARM_TENANT_ID: $(ARM_TENANT_ID)
+                - template: templates/terraform-setup.yml
+                  parameters:
+                    terraformVersion: $(terraformVersion)
+                    workingDirectory: $(workingDirectory)
 
                 - download: current
                   artifact: terraform-plan
                   displayName: 'Download plan artifact'
 
-                - script: |
-                    cp $(Pipeline.Workspace)/terraform-plan/tfplan ./tfplan
-                    terraform apply -auto-approve -input=false tfplan
-                  displayName: 'Terraform Apply'
-                  workingDirectory: '$(workingDirectory)'
-                  env:
-                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-                    ARM_TENANT_ID: $(ARM_TENANT_ID)
-                    TF_VAR_db_admin_password: $(TF_VAR_db_admin_password)
+                - template: templates/terraform-run.yml
+                  parameters:
+                    command: |
+                      cp $(Pipeline.Workspace)/terraform-plan/tfplan ./tfplan
+                      terraform apply -auto-approve -input=false tfplan
+                    displayName: 'Terraform Apply'
+                    workingDirectory: $(workingDirectory)
+                    includeDbPassword: true
 
   - stage: Destroy
     displayName: 'Terraform Destroy'
@@ -157,27 +122,14 @@ stages:
               steps:
                 - checkout: self
 
-                - script: |
-                    wget -q https://releases.hashicorp.com/terraform/$(terraformVersion)/terraform_$(terraformVersion)_linux_amd64.zip
-                    unzip -o terraform_*.zip
-                    sudo mv terraform /usr/local/bin/
-                  displayName: 'Install Terraform $(terraformVersion)'
+                - template: templates/terraform-setup.yml
+                  parameters:
+                    terraformVersion: $(terraformVersion)
+                    workingDirectory: $(workingDirectory)
 
-                - script: terraform init -input=false
-                  displayName: 'Terraform Init'
-                  workingDirectory: '$(workingDirectory)'
-                  env:
-                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-                    ARM_TENANT_ID: $(ARM_TENANT_ID)
-
-                - script: terraform destroy -auto-approve -input=false
-                  displayName: 'Terraform Destroy'
-                  workingDirectory: '$(workingDirectory)'
-                  env:
-                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-                    ARM_TENANT_ID: $(ARM_TENANT_ID)
-                    TF_VAR_db_admin_password: $(TF_VAR_db_admin_password)
+                - template: templates/terraform-run.yml
+                  parameters:
+                    command: terraform destroy -auto-approve -input=false
+                    displayName: 'Terraform Destroy'
+                    workingDirectory: $(workingDirectory)
+                    includeDbPassword: true

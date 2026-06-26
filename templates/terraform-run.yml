@@ -1,0 +1,22 @@
+parameters:
+  - name: command
+    type: string
+  - name: displayName
+    type: string
+  - name: workingDirectory
+    type: string
+  - name: includeDbPassword
+    type: boolean
+    default: false
+
+steps:
+  - script: ${{ parameters.command }}
+    displayName: '${{ parameters.displayName }}'
+    workingDirectory: '${{ parameters.workingDirectory }}'
+    env:
+      ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+      ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+      ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+      ARM_TENANT_ID: $(ARM_TENANT_ID)
+      ${{ if eq(parameters.includeDbPassword, true) }}:
+        TF_VAR_db_admin_password: $(TF_VAR_db_admin_password)
