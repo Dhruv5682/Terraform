@@ -1,0 +1,78 @@
+trigger: none                        
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - 'envs/dev/**'
+      - 'modules/**'
+    exclude:
+      - '*.md'
+      - '.gitignore'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: infra-vars
+  - name: terraformVersion
+    value: '1.9.0'
+  - name: workingDirectory
+    value: 'envs/dev'
+
+stages:
+  - stage: TrivyScan
+    displayName: 'Trivy Security Scan'
+    jobs:
+      - job: Trivy
+        displayName: 'Scan Terraform with Trivy'
+        steps:
+          - checkout: self
+
+          - script: |
+              sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+              wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+              echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+              sudo apt-get update
+              sudo apt-get install -y trivy
+            displayName: 'Install Trivy'
+
+          - script: trivy config --severity HIGH,CRITICAL --exit-code 1 .
+            displayName: 'Trivy - Scan Terraform configs'
+            workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+  - stage: Plan
+    displayName: 'Terraform Plan'
+    dependsOn: TrivyScan
+    jobs:
+      - job: Plan
+        displayName: 'Generate execution plan'
+        steps:
+          - checkout: self
+
+          - script: |
+              wget -q https://releases.hashicorp.com/terraform/$(terraformVersion)/terraform_$(terraformVersion)_linux_amd64.zip
+              unzip -o terraform_*.zip
+              sudo mv terraform /usr/local/bin/
+            displayName: 'Install Terraform $(terraformVersion)'
+
+          - script: terraform init -input=false
+            displayName: 'Terraform Init'
+            workingDirectory: '$(workingDirectory)'
+            env:
+              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+
+          - script: terraform plan -input=false
+            displayName: 'Terraform Plan'
+            workingDirectory: '$(workingDirectory)'
+            env:
+              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+              TF_VAR_db_admin_password: $(TF_VAR_db_admin_password)
